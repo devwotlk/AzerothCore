@@ -30,6 +30,7 @@ echo "Configuring MySQL server and creating user..."
 sleep 3
 sudo service mysql start
 sleep 3
+
 # MySQL user creation
 mysql -u root <<EOF
 DROP USER IF EXISTS 'acore'@'localhost';
@@ -50,13 +51,11 @@ echo "Cloning AzerothCore repository..."
 sleep 5
 git clone https://github.com/azerothcore/azerothcore-wotlk.git --branch master --single-branch $HOME/azerothcore-source
 
-
 # Cloning Mod Eluna Lua repository
 echo
 echo "Cloning Mod Eluna Lua module..."
 sleep 5
 git clone https://github.com/azerothcore/mod-eluna.git $HOME/azerothcore-source/modules/mod-eluna
-
 
 # Create build directory inside azerothcore-source
 echo
@@ -65,7 +64,6 @@ sleep 5
 mkdir $HOME/azerothcore-source/build
 cd $HOME/azerothcore-source/build
 
-
 # Configure the build with CMake
 echo
 echo "Configuring the build..."
@@ -73,7 +71,6 @@ sleep 5
 cmake ../ -DCMAKE_INSTALL_PREFIX=$HOME/azerothcore-source/env/dist/ \
     -DCMAKE_C_COMPILER=/usr/bin/clang -DCMAKE_CXX_COMPILER=/usr/bin/clang++ \
     -DWITH_WARNINGS=1 -DTOOLS_BUILD=all -DSCRIPTS=static -DMODULES=static
-
 
 # Build with all available cores
 cores=$(nproc --all)
@@ -91,3 +88,22 @@ else
     echo "Build failed. Exiting..."
     exit 1
 fi
+
+# Adding the next step: Inform user about database population
+echo
+echo "Before launching the server, initial database population with game data is required."
+read -p "Do you want to continue with the initial database setup? (y/n): " db_choice
+
+if [[ "$db_choice" != "y" ]]; then
+    echo "Database population canceled. Exiting."
+    exit 1
+fi
+
+# Launching the worldserver
+echo
+echo "Starting worldserver..."
+sleep 5
+
+# Navigate to the AzerothCore build folder and start the worldserver
+cd $HOME/azerothcore-source/build
+./worldserver 
